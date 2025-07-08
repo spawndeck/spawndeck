@@ -1,0 +1,28 @@
+{
+  "name": "spawndeck",
+  "version": "1.0.0",
+  "description": "CLI tool for Spawndeck",
+  "main": "index.js",
+  "bin": {
+    "spawndeck": "./bin/spawndeck.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "spawndeck",
+    "cli"
+  ],
+  "author": "Spawndeck",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spawndeck/spawndeck.git"
+  }
+}
