@@ -1,0 +1,22 @@
+{
+  "name": "spawndeck-infrastructure",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "cdk": "cdk",
+    "deploy": "npm run build && cdk deploy --profile gammainvestments --require-approval never",
+    "destroy": "cdk destroy --profile gammainvestments"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.6",
+    "aws-cdk": "^2.171.0",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.7.3"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.171.0",
+    "constructs": "^10.0.0"
+  }
+}
