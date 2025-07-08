@@ -1,5 +1,7 @@
 {
   "name": "spawndeck",
+  "version": "1.0.0",
+  "description": "Monorepo for Spawndeck CLI and website",
   "private": true,
   "workspaces": [
     "spawndeck-cli",
@@ -25,5 +27,19 @@
     "*.{json,md}": [
       "prettier --write"
     ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spawndeck/spawndeck.git"
+  },
+  "keywords": [
+    "spawndeck",
+    "cli",
+    "monorepo"
+  ],
+  "author": "Spawndeck",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
   }
 }
