@@ -39,7 +39,7 @@ npm run format
 The CLI tool that helps developers manage multiple Claude Code instances in parallel. Install globally with:
 
 ```bash
-npm install -g spawndeck-cli
+npm install -g spawndeck
 ```
 
 See [spawndeck-cli/README.md](./spawndeck-cli/README.md) for more details.

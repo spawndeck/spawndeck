@@ -102,7 +102,7 @@ export default function Home() {
               <div className="mb-6">
                 <h3 className="text-lg font-semibold mb-3">Install via npm</h3>
                 <div className="bg-gray-900 rounded p-4 font-mono text-sm">
-                  npm install -g spawndeck-cli
+                  npm install -g spawndeck
                 </div>
               </div>
 
@@ -140,7 +140,7 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="https://www.npmjs.com/package/spawndeck-cli"
+              href="https://www.npmjs.com/package/spawndeck"
               className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 transition-colors"
             >
               View on npm
