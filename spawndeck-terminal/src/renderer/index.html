@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <title>Spawndeck Terminal</title>
+    <link rel="stylesheet" href="https://unpkg.com/xterm@5.3.0/css/xterm.css">
     <style>
       body {
         margin: 0;
@@ -10,6 +11,7 @@
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         background: #1e1e1e;
         color: #fff;
+        overflow: hidden;
       }
       .app {
         display: flex;
@@ -23,22 +25,90 @@
         padding: 0 10px;
         height: 40px;
         align-items: center;
+        user-select: none;
+      }
+      .tabs-container {
+        display: flex;
+        flex: 1;
+        overflow-x: auto;
+        align-items: center;
       }
       .tab {
+        position: relative;
         padding: 8px 16px;
+        padding-right: 30px;
         background: #3d3d3d;
         margin-right: 4px;
         border-radius: 4px 4px 0 0;
         cursor: pointer;
+        white-space: nowrap;
+        transition: background 0.2s;
+      }
+      .tab:hover {
+        background: #4d4d4d;
       }
       .tab.active {
         background: #1e1e1e;
       }
-      .terminal-container {
-        flex: 1;
-        padding: 20px;
+      .tab.dragging {
+        opacity: 0.5;
       }
-      #terminal {
+      .tab-close {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: transparent;
+        border: none;
+        color: #999;
+        cursor: pointer;
+        font-size: 12px;
+        line-height: 1;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .tab-close:hover {
+        background: #555;
+        color: #fff;
+      }
+      .new-tab-btn {
+        padding: 4px 12px;
+        background: transparent;
+        border: 1px solid #555;
+        color: #999;
+        cursor: pointer;
+        border-radius: 4px;
+        margin-left: 8px;
+        font-size: 18px;
+        line-height: 1;
+      }
+      .new-tab-btn:hover {
+        background: #3d3d3d;
+        color: #fff;
+      }
+      .terminals-container {
+        flex: 1;
+        position: relative;
+        background: #1e1e1e;
+      }
+      .terminal-wrapper {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 10px;
+        display: none;
+      }
+      .terminal-wrapper.active {
+        display: block;
+      }
+      .terminal {
         width: 100%;
         height: 100%;
       }
@@ -47,59 +117,260 @@
   <body>
     <div class="app">
       <div class="tab-bar">
-        <div class="tab active">Terminal 1</div>
-        <button onclick="createNewTab()">+</button>
+        <div class="tabs-container" id="tabs-container"></div>
+        <button class="new-tab-btn" onclick="createNewTab()">+</button>
       </div>
-      <div class="terminal-container">
-        <div id="terminal"></div>
-      </div>
+      <div class="terminals-container" id="terminals-container"></div>
     </div>
     
+    <script src="https://unpkg.com/xterm@5.3.0/lib/xterm.js"></script>
+    <script src="https://unpkg.com/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
     <script>
       console.log('Renderer process starting...');
       console.log('window.electronAPI:', window.electronAPI);
       console.log('window.PRELOAD_LOADED:', window.PRELOAD_LOADED);
       
-      let terminalId = null;
+      let tabs = [];
+      let activeTabId = null;
+      let draggedTab = null;
       
-      async function initTerminal() {
-        if (!window.electronAPI) {
-          console.error('electronAPI not available');
-          document.getElementById('terminal').innerHTML = '<p>Error: electronAPI not available. Check preload script.</p>';
-          return;
-        }
+      function generateId() {
+        return 'tab-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+      }
+      
+      async function createNewTab() {
+        const tabId = generateId();
+        const tab = {
+          id: tabId,
+          title: 'Terminal ' + (tabs.length + 1),
+          terminal: null,
+          fitAddon: null
+        };
         
-        terminalId = 'term-' + Date.now();
+        tabs.push(tab);
         
+        // Create tab element
+        const tabEl = createTabElement(tab);
+        document.getElementById('tabs-container').appendChild(tabEl);
+        
+        // Create terminal wrapper
+        const termWrapper = document.createElement('div');
+        termWrapper.className = 'terminal-wrapper';
+        termWrapper.id = 'term-' + tabId;
+        
+        const termEl = document.createElement('div');
+        termEl.className = 'terminal';
+        termWrapper.appendChild(termEl);
+        
+        document.getElementById('terminals-container').appendChild(termWrapper);
+        
+        // Initialize xterm
+        const term = new Terminal({
+          cursorBlink: true,
+          fontSize: 14,
+          fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+          theme: {
+            background: '#1e1e1e',
+            foreground: '#d4d4d4'
+          }
+        });
+        
+        const fitAddon = new FitAddon.FitAddon();
+        term.loadAddon(fitAddon);
+        
+        term.open(termEl);
+        fitAddon.fit();
+        
+        tab.terminal = term;
+        tab.fitAddon = fitAddon;
+        
+        // Initialize node-pty terminal
         try {
-          await window.electronAPI.terminal.create({ id: terminalId });
-          
-          const termDiv = document.getElementById('terminal');
-          termDiv.innerHTML = '<pre style="margin:0; font-family: monospace;"></pre>';
-          const pre = termDiv.querySelector('pre');
-          
-          // Listen for data
-          window.electronAPI.terminal.onData(terminalId, (data) => {
-            pre.textContent += data;
+          await window.electronAPI.terminal.create({ 
+            id: tabId,
+            cols: term.cols,
+            rows: term.rows
           });
           
-          // Basic input handling
-          document.addEventListener('keypress', async (e) => {
-            const char = e.key;
-            await window.electronAPI.terminal.write(terminalId, char);
+          // Handle terminal data
+          window.electronAPI.terminal.onData(tabId, (data) => {
+            term.write(data);
+          });
+          
+          // Handle terminal input
+          term.onData((data) => {
+            window.electronAPI.terminal.write(tabId, data);
+          });
+          
+          // Handle special key sequences
+          term.attachCustomKeyEventHandler((event) => {
+            // Allow all keys to be handled by xterm
+            return true;
+          });
+          
+          // Handle resize
+          term.onResize(({ cols, rows }) => {
+            window.electronAPI.terminal.resize(tabId, cols, rows);
+          });
+          
+          // Handle terminal exit
+          window.electronAPI.terminal.onExit(tabId, () => {
+            closeTab(tabId);
           });
           
         } catch (error) {
           console.error('Failed to create terminal:', error);
         }
+        
+        // Activate the new tab
+        activateTab(tabId);
       }
       
-      function createNewTab() {
-        alert('New tab functionality coming soon!');
+      function createTabElement(tab) {
+        const tabEl = document.createElement('div');
+        tabEl.className = 'tab';
+        tabEl.id = 'tab-' + tab.id;
+        tabEl.draggable = true;
+        
+        const titleEl = document.createElement('span');
+        titleEl.textContent = tab.title;
+        tabEl.appendChild(titleEl);
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'tab-close';
+        closeBtn.innerHTML = '×';
+        closeBtn.onclick = (e) => {
+          e.stopPropagation();
+          closeTab(tab.id);
+        };
+        tabEl.appendChild(closeBtn);
+        
+        // Click to activate
+        tabEl.onclick = () => activateTab(tab.id);
+        
+        // Drag and drop
+        tabEl.ondragstart = (e) => {
+          draggedTab = tab;
+          tabEl.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        };
+        
+        tabEl.ondragend = () => {
+          tabEl.classList.remove('dragging');
+          draggedTab = null;
+        };
+        
+        tabEl.ondragover = (e) => {
+          e.preventDefault();
+          if (draggedTab && draggedTab !== tab) {
+            e.dataTransfer.dropEffect = 'move';
+          }
+        };
+        
+        tabEl.ondrop = (e) => {
+          e.preventDefault();
+          if (draggedTab && draggedTab !== tab) {
+            reorderTabs(draggedTab, tab);
+          }
+        };
+        
+        return tabEl;
       }
       
-      // Initialize when page loads
-      window.addEventListener('DOMContentLoaded', initTerminal);
+      function activateTab(tabId) {
+        activeTabId = tabId;
+        
+        // Update tab styles
+        document.querySelectorAll('.tab').forEach(t => {
+          t.classList.remove('active');
+        });
+        document.getElementById('tab-' + tabId).classList.add('active');
+        
+        // Show/hide terminals
+        document.querySelectorAll('.terminal-wrapper').forEach(t => {
+          t.classList.remove('active');
+        });
+        document.getElementById('term-' + tabId).classList.add('active');
+        
+        // Focus terminal
+        const tab = tabs.find(t => t.id === tabId);
+        if (tab && tab.terminal) {
+          tab.terminal.focus();
+        }
+      }
+      
+      async function closeTab(tabId) {
+        if (tabs.length === 1) {
+          alert('Cannot close the last tab');
+          return;
+        }
+        
+        const tabIndex = tabs.findIndex(t => t.id === tabId);
+        if (tabIndex === -1) return;
+        
+        // Kill the terminal
+        await window.electronAPI.terminal.kill(tabId);
+        
+        // Remove from array
+        const [removedTab] = tabs.splice(tabIndex, 1);
+        
+        // Remove DOM elements
+        document.getElementById('tab-' + tabId).remove();
+        document.getElementById('term-' + tabId).remove();
+        
+        // Clean up terminal
+        if (removedTab.terminal) {
+          removedTab.terminal.dispose();
+        }
+        
+        // If this was the active tab, activate another
+        if (activeTabId === tabId && tabs.length > 0) {
+          const newActiveIndex = Math.min(tabIndex, tabs.length - 1);
+          activateTab(tabs[newActiveIndex].id);
+        }
+      }
+      
+      function reorderTabs(draggedTab, targetTab) {
+        const draggedIndex = tabs.indexOf(draggedTab);
+        const targetIndex = tabs.indexOf(targetTab);
+        
+        if (draggedIndex === -1 || targetIndex === -1) return;
+        
+        // Reorder in array
+        tabs.splice(draggedIndex, 1);
+        tabs.splice(targetIndex, 0, draggedTab);
+        
+        // Reorder in DOM
+        const container = document.getElementById('tabs-container');
+        const draggedEl = document.getElementById('tab-' + draggedTab.id);
+        const targetEl = document.getElementById('tab-' + targetTab.id);
+        
+        if (draggedIndex < targetIndex) {
+          container.insertBefore(draggedEl, targetEl.nextSibling);
+        } else {
+          container.insertBefore(draggedEl, targetEl);
+        }
+      }
+      
+      // Initialize with one tab when page loads
+      window.addEventListener('DOMContentLoaded', () => {
+        if (!window.electronAPI) {
+          console.error('electronAPI not available');
+          document.body.innerHTML = '<p style="padding: 20px;">Error: electronAPI not available. Check preload script.</p>';
+          return;
+        }
+        
+        createNewTab();
+      });
+      
+      // Global window resize handler
+      window.addEventListener('resize', () => {
+        tabs.forEach(tab => {
+          if (tab.fitAddon) {
+            tab.fitAddon.fit();
+          }
+        });
+      });
     </script>
   </body>
 </html>

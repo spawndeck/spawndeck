@@ -1,11 +1,13 @@
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const { join } = require('path');
 const url = require('url');
+const pty = require('node-pty');
 
 const terminals = new Map();
+let mainWindow;
 
 function createWindow() {
-    const mainWindow = new BrowserWindow({
+    mainWindow = new BrowserWindow({
         width: 900,
         height: 670,
         show: false,
@@ -58,26 +60,44 @@ app.on('window-all-closed', () => {
 
 // Terminal IPC handlers
 ipcMain.handle('terminal:create', (event, options) => {
-    // Temporarily mock the terminal creation
     console.log('Creating terminal:', options.id);
-    terminals.set(options.id, { id: options.id, pty: null });
+    
+    const shell = process.platform === 'win32' 
+        ? 'powershell.exe' 
+        : process.env.SHELL || '/bin/bash';
+    const ptyProcess = pty.spawn(shell, [], {
+        name: 'xterm-color',
+        cols: options.cols || 80,
+        rows: options.rows || 30,
+        cwd: process.env.HOME,
+        env: process.env
+    });
 
-    // Send some mock data
-    setTimeout(() => {
-        event.sender.send(`terminal:data:${options.id}`, 'Welcome to Spawndeck Terminal!\r\n$ ');
-    }, 100);
+    const terminal = {
+        id: options.id,
+        pty: ptyProcess
+    };
+
+    terminals.set(options.id, terminal);
+
+    // Handle data from the pty
+    ptyProcess.onData((data) => {
+        event.sender.send(`terminal:data:${options.id}`, data);
+    });
+
+    // Handle pty exit
+    ptyProcess.onExit(() => {
+        terminals.delete(options.id);
+        event.sender.send(`terminal:exit:${options.id}`);
+    });
 
     return { success: true };
 });
 
 ipcMain.handle('terminal:write', (event, { id, data }) => {
     const terminal = terminals.get(id);
-    if (terminal) {
-        // Echo the data back for now
-        event.sender.send(`terminal:data:${id}`, data);
-        if (data === '\r') {
-            event.sender.send(`terminal:data:${id}`, '\n$ ');
-        }
+    if (terminal && terminal.pty) {
+        terminal.pty.write(data);
         return { success: true };
     }
     return { success: false, error: 'Terminal not found' };
@@ -85,8 +105,8 @@ ipcMain.handle('terminal:write', (event, { id, data }) => {
 
 ipcMain.handle('terminal:resize', (event, { id, cols, rows }) => {
     const terminal = terminals.get(id);
-    if (terminal) {
-        // Mock resize for now
+    if (terminal && terminal.pty) {
+        terminal.pty.resize(cols, rows);
         console.log(`Resizing terminal ${id} to ${cols}x${rows}`);
         return { success: true };
     }
@@ -95,9 +115,9 @@ ipcMain.handle('terminal:resize', (event, { id, cols, rows }) => {
 
 ipcMain.handle('terminal:kill', (event, { id }) => {
     const terminal = terminals.get(id);
-    if (terminal) {
-        // Mock kill for now
+    if (terminal && terminal.pty) {
         console.log(`Killing terminal ${id}`);
+        terminal.pty.kill();
         terminals.delete(id);
         return { success: true };
     }
