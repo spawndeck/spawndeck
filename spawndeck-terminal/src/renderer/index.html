@@ -31,14 +31,13 @@
       
       /* macOS specific styling */
       .darwin .tab-bar {
-        padding-top: 28px; /* Space for macOS traffic lights */
-        height: 68px; /* 40px + 28px padding */
+        padding-left: 80px; /* Space for macOS traffic lights on the left */
       }
       .tabs-container {
         display: flex;
-        flex: 1;
         overflow-x: auto;
         align-items: center;
+        gap: 4px;
       }
       .tab {
         position: relative;
@@ -91,10 +90,10 @@
         color: #999;
         cursor: pointer;
         border-radius: 4px;
-        margin-left: 8px;
         font-size: 18px;
         line-height: 1;
         -webkit-app-region: no-drag; /* Make button clickable */
+        flex-shrink: 0;
       }
       .new-tab-btn:hover {
         background: #3d3d3d;
@@ -253,8 +252,9 @@
   <body>
     <div class="app">
       <div class="tab-bar">
-        <div class="tabs-container" id="tabs-container"></div>
-        <button class="new-tab-btn" onclick="createNewTab()">+</button>
+        <div class="tabs-container" id="tabs-container">
+          <!-- Tabs will be inserted here dynamically -->
+        </div>
       </div>
       <div class="terminals-container" id="terminals-container"></div>
     </div>
@@ -424,6 +424,21 @@
         return 'tab-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
       }
       
+      function updateNewTabButton() {
+        // Remove existing button if any
+        const existingBtn = document.querySelector('.new-tab-btn');
+        if (existingBtn) {
+          existingBtn.remove();
+        }
+        
+        // Create and append new button
+        const newTabBtn = document.createElement('button');
+        newTabBtn.className = 'new-tab-btn';
+        newTabBtn.innerHTML = '+';
+        newTabBtn.onclick = createNewTab;
+        document.getElementById('tabs-container').appendChild(newTabBtn);
+      }
+      
       async function createNewTab() {
         const tabId = generateId();
         const tab = {
@@ -437,7 +452,14 @@
         
         // Create tab element
         const tabEl = createTabElement(tab);
-        document.getElementById('tabs-container').appendChild(tabEl);
+        // Insert before the + button
+        const container = document.getElementById('tabs-container');
+        const newTabBtn = container.querySelector('.new-tab-btn');
+        if (newTabBtn) {
+          container.insertBefore(tabEl, newTabBtn);
+        } else {
+          container.appendChild(tabEl);
+        }
         
         // Create terminal wrapper
         const termWrapper = document.createElement('div');
@@ -719,6 +741,9 @@
             activeTab.terminal.clear();
           }
         });
+        
+        // Create the initial + button
+        updateNewTabButton();
         
         createNewTab();
       });
