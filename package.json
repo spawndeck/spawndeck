@@ -1,7 +1,7 @@
 {
   "name": "spawndeck",
   "version": "1.0.0",
-  "description": "Monorepo for Spawndeck CLI and website",
+  "description": "Monorepo for Spawndeck CLI, terminal, and website",
   "private": true,
   "workspaces": [
     "spawndeck-cli",

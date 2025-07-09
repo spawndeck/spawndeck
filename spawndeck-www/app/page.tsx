@@ -159,7 +159,7 @@ export default function Home() {
       <footer className="py-8 bg-gray-900 border-t border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center text-gray-400">
-            <p>© 2024 Spawndeck. All rights reserved.</p>
+            <p>© 2025 Spawndeck. All rights reserved.</p>
           </div>
         </div>
       </footer>
