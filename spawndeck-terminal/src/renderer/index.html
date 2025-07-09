@@ -3,10 +3,103 @@
   <head>
     <meta charset="UTF-8">
     <title>Spawndeck Terminal</title>
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #1e1e1e;
+        color: #fff;
+      }
+      .app {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+      }
+      .tab-bar {
+        display: flex;
+        background: #2d2d2d;
+        border-bottom: 1px solid #3d3d3d;
+        padding: 0 10px;
+        height: 40px;
+        align-items: center;
+      }
+      .tab {
+        padding: 8px 16px;
+        background: #3d3d3d;
+        margin-right: 4px;
+        border-radius: 4px 4px 0 0;
+        cursor: pointer;
+      }
+      .tab.active {
+        background: #1e1e1e;
+      }
+      .terminal-container {
+        flex: 1;
+        padding: 20px;
+      }
+      #terminal {
+        width: 100%;
+        height: 100%;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="./index.tsx"></script>
+    <div class="app">
+      <div class="tab-bar">
+        <div class="tab active">Terminal 1</div>
+        <button onclick="createNewTab()">+</button>
+      </div>
+      <div class="terminal-container">
+        <div id="terminal"></div>
+      </div>
+    </div>
+    
+    <script>
+      console.log('Renderer process starting...');
+      console.log('window.electronAPI:', window.electronAPI);
+      console.log('window.PRELOAD_LOADED:', window.PRELOAD_LOADED);
+      
+      let terminalId = null;
+      
+      async function initTerminal() {
+        if (!window.electronAPI) {
+          console.error('electronAPI not available');
+          document.getElementById('terminal').innerHTML = '<p>Error: electronAPI not available. Check preload script.</p>';
+          return;
+        }
+        
+        terminalId = 'term-' + Date.now();
+        
+        try {
+          await window.electronAPI.terminal.create({ id: terminalId });
+          
+          const termDiv = document.getElementById('terminal');
+          termDiv.innerHTML = '<pre style="margin:0; font-family: monospace;"></pre>';
+          const pre = termDiv.querySelector('pre');
+          
+          // Listen for data
+          window.electronAPI.terminal.onData(terminalId, (data) => {
+            pre.textContent += data;
+          });
+          
+          // Basic input handling
+          document.addEventListener('keypress', async (e) => {
+            const char = e.key;
+            await window.electronAPI.terminal.write(terminalId, char);
+          });
+          
+        } catch (error) {
+          console.error('Failed to create terminal:', error);
+        }
+      }
+      
+      function createNewTab() {
+        alert('New tab functionality coming soon!');
+      }
+      
+      // Initialize when page loads
+      window.addEventListener('DOMContentLoaded', initTerminal);
+    </script>
   </body>
 </html>

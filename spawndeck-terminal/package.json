@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "description": "Electron-based terminal for Spawndeck",
   "main": "src/main/index.js",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
-    "dev": "electron .",
+    "dev": "cross-env ELECTRON_DISABLE_SANDBOX=1 ELECTRON_NO_ATTACH_CONSOLE=1 NODE_OPTIONS= npx electron . --no-sandbox",
     "rebuild": "electron-rebuild",
     "postinstall": "electron-rebuild"
   },
@@ -16,8 +16,12 @@
   "author": "Spawndeck",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^28.0.0",
-    "electron-rebuild": "^3.2.9"
+    "cross-env": "^7.0.3",
+    "electron": "^22.3.27",
+    "electron-rebuild": "^3.2.9",
+    "@babel/core": "^7.22.0",
+    "@babel/preset-react": "^7.22.0",
+    "@babel/standalone": "^7.22.0"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.0.0",
