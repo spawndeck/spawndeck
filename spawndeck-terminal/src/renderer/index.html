@@ -41,21 +41,25 @@
       }
       .tab {
         position: relative;
-        padding: 8px 16px;
+        padding: 4px 16px;
         padding-right: 30px;
-        background: #3d3d3d;
+        background: transparent;
+        border: 1px solid #555;
         margin-right: 4px;
-        border-radius: 4px 4px 0 0;
+        border-radius: 4px;
         cursor: pointer;
         white-space: nowrap;
-        transition: background 0.2s;
+        transition: all 0.2s;
         -webkit-app-region: no-drag; /* Make tabs clickable */
       }
       .tab:hover {
-        background: #4d4d4d;
+        background: rgba(255, 255, 255, 0.05);
+        border-color: #666;
       }
       .tab.active {
         background: #1e1e1e;
+        border-color: #1e1e1e;
+        border-bottom-color: #1e1e1e;
       }
       .tab.dragging {
         opacity: 0.5;
@@ -90,8 +94,8 @@
         color: #999;
         cursor: pointer;
         border-radius: 4px;
-        font-size: 18px;
-        line-height: 1;
+        font-size: 16px;
+        line-height: 1.2;
         -webkit-app-region: no-drag; /* Make button clickable */
         flex-shrink: 0;
       }
