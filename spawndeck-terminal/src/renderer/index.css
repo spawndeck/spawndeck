@@ -14,3 +14,13 @@ html, body, #root {
   padding: 0;
   overflow: hidden;
 }
+
+/* Ensure terminal fills container */
+.xterm {
+  height: 100%;
+  padding: 10px;
+}
+
+.xterm-viewport {
+  overflow-y: auto;
+}

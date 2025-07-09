@@ -1,0 +1,86 @@
+.settings-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.settings-modal {
+  background: var(--tab-bar-bg);
+  border-radius: 8px;
+  padding: 20px;
+  width: 400px;
+  max-height: 80vh;
+  overflow: auto;
+  border: 1px solid var(--border-color);
+}
+
+.settings-modal h2 {
+  margin: 0 0 20px 0;
+  color: var(--tab-text);
+}
+
+.settings-group {
+  margin-bottom: 15px;
+}
+
+.settings-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 13px;
+  color: var(--tab-text);
+}
+
+.settings-group input,
+.settings-group select {
+  width: 100%;
+  padding: 5px;
+  background: #3c3c3c;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  color: var(--tab-text);
+  font-size: 13px;
+}
+
+.settings-group input:focus,
+.settings-group select:focus {
+  outline: none;
+  border-color: #007acc;
+}
+
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+  gap: 10px;
+}
+
+.settings-button {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: opacity 0.2s;
+}
+
+.settings-button:hover {
+  opacity: 0.8;
+}
+
+.settings-button.primary {
+  background: #007acc;
+  color: white;
+}
+
+.settings-button.secondary {
+  background: #3c3c3c;
+  color: var(--tab-text);
+  border: 1px solid var(--border-color);
+}

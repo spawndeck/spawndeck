@@ -1,117 +1,78 @@
 .tab-bar {
   display: flex;
+  background: var(--tab-bar-bg);
+  border-bottom: 1px solid var(--border-color);
+  padding-top: 5px;
+  padding-left: 80px; /* Space for macOS traffic lights */
+  min-height: 35px;
   align-items: center;
-  height: 35px;
-  padding: 0 10px;
-  background-color: var(--tab-bar-bg, #252526);
-  user-select: none;
   -webkit-app-region: drag;
-}
-
-.tabs-container {
-  display: flex;
-  align-items: center;
-  height: 100%;
-  gap: 2px;
-  -webkit-app-region: no-drag;
 }
 
 .tab {
   display: flex;
   align-items: center;
-  height: 28px;
-  padding: 0 12px;
-  background-color: var(--tab-bg, #2d2d30);
-  border: 1px solid transparent;
-  border-radius: 4px 4px 0 0;
+  padding: 6px 12px;
+  background: var(--tab-bg);
+  border-top: 2px solid transparent;
+  border-left: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
   cursor: pointer;
-  transition: background-color 0.2s;
+  font-size: 13px;
   position: relative;
-  min-width: 120px;
-  max-width: 200px;
+  margin-right: 1px;
+  user-select: none;
+  -webkit-app-region: no-drag;
+  transition: background-color 0.2s;
 }
 
 .tab:hover {
-  background-color: var(--tab-hover-bg, #3e3e42);
+  background: var(--tab-hover-bg);
 }
 
 .tab.active {
-  background-color: var(--active-tab-bg, #1e1e1e);
-  border-color: var(--border-color, #464647);
-  border-bottom-color: transparent;
+  background: var(--active-tab-bg);
+  border-top-color: #007acc;
+}
+
+.tab.dragging {
+  opacity: 0.5;
 }
 
 .tab-title {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 12px;
-  color: var(--tab-text, #cccccc);
-  margin-right: 8px;
+  margin-right: 20px;
 }
 
 .tab-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  border: none;
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
   background: none;
-  color: var(--tab-text, #cccccc);
+  border: none;
+  color: var(--tab-text);
   font-size: 16px;
-  line-height: 1;
   cursor: pointer;
-  border-radius: 3px;
-  opacity: 0;
-  transition: opacity 0.2s, background-color 0.2s;
-}
-
-.tab:hover .tab-close,
-.tab.active .tab-close {
-  opacity: 0.7;
+  padding: 0 4px;
+  opacity: 0.6;
+  line-height: 1;
 }
 
 .tab-close:hover {
   opacity: 1;
-  background-color: rgba(255, 255, 255, 0.1);
 }
 
-.tab-add {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
+.new-tab-button {
   background: none;
-  color: var(--tab-text, #cccccc);
-  font-size: 18px;
+  border: none;
+  color: var(--tab-text);
+  font-size: 20px;
   cursor: pointer;
-  border-radius: 4px;
-  transition: background-color 0.2s;
+  padding: 0 10px;
+  opacity: 0.6;
+  -webkit-app-region: no-drag;
 }
 
-.tab-add:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.tab-drag-handle {
-  display: flex;
-  align-items: center;
-  flex: 1;
-  height: 100%;
-  cursor: grab;
-}
-
-.tab-drag-handle:active {
-  cursor: grabbing;
-}
-
-/* macOS specific styles */
-@media (prefers-color-scheme: dark) {
-  .tab-bar:first-child {
-    padding-left: 80px; /* Space for traffic lights */
-  }
+.new-tab-button:hover {
+  opacity: 1;
 }

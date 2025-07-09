@@ -61,14 +61,17 @@ function createWindow() {
         return { action: 'deny' };
     });
 
-    // Load the local HTML file
-    const indexPath = url.format({
-        pathname: join(__dirname, '../renderer/index.html'),
-        protocol: 'file:',
-        slashes: true
-    });
-    
-    mainWindow.loadURL(indexPath);
+    // Load the app - in dev mode, load from webpack dev server
+    if (process.env.NODE_ENV === 'development') {
+        mainWindow.loadURL('http://localhost:3000');
+    } else {
+        const indexPath = url.format({
+            pathname: join(__dirname, '../../dist/renderer/index.html'),
+            protocol: 'file:',
+            slashes: true
+        });
+        mainWindow.loadURL(indexPath);
+    }
     
     // Open DevTools in development
     if (process.env.NODE_ENV !== 'production') {
@@ -245,7 +248,7 @@ ipcMain.handle('terminal:create', (event, options) => {
         event.sender.send(`terminal:exit:${options.id}`);
     });
 
-    return { success: true };
+    return options.id;
 });
 
 ipcMain.handle('terminal:write', (event, { id, data }) => {
