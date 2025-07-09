@@ -36,6 +36,15 @@ const electronAPI = {
       ipcRenderer.on(channel, callback);
       return () => ipcRenderer.removeAllListeners(channel);
     }
+  },
+  settings: {
+    get: () => ipcRenderer.invoke('settings:get'),
+    save: (settings) => ipcRenderer.invoke('settings:save', settings)
+  },
+  onShortcut: (shortcut, callback) => {
+    const channel = `shortcut:${shortcut}`;
+    ipcRenderer.on(channel, callback);
+    return () => ipcRenderer.removeAllListeners(channel);
   }
 };
 

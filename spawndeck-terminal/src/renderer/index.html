@@ -26,6 +26,13 @@
         height: 40px;
         align-items: center;
         user-select: none;
+        -webkit-app-region: drag; /* Make the tab bar draggable */
+      }
+      
+      /* macOS specific styling */
+      .darwin .tab-bar {
+        padding-top: 28px; /* Space for macOS traffic lights */
+        height: 68px; /* 40px + 28px padding */
       }
       .tabs-container {
         display: flex;
@@ -43,6 +50,7 @@
         cursor: pointer;
         white-space: nowrap;
         transition: background 0.2s;
+        -webkit-app-region: no-drag; /* Make tabs clickable */
       }
       .tab:hover {
         background: #4d4d4d;
@@ -86,8 +94,24 @@
         margin-left: 8px;
         font-size: 18px;
         line-height: 1;
+        -webkit-app-region: no-drag; /* Make button clickable */
       }
       .new-tab-btn:hover {
+        background: #3d3d3d;
+        color: #fff;
+      }
+      .settings-btn {
+        padding: 4px 12px;
+        background: transparent;
+        border: 1px solid #555;
+        color: #999;
+        cursor: pointer;
+        border-radius: 4px;
+        margin-left: 8px;
+        font-size: 14px;
+        -webkit-app-region: no-drag;
+      }
+      .settings-btn:hover {
         background: #3d3d3d;
         color: #fff;
       }
@@ -112,6 +136,133 @@
         width: 100%;
         height: 100%;
       }
+      
+      /* Settings Modal */
+      .settings-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+      }
+      .settings-modal.active {
+        display: flex;
+      }
+      .settings-content {
+        background: #2d2d2d;
+        border-radius: 8px;
+        width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      }
+      .settings-header {
+        padding: 20px;
+        border-bottom: 1px solid #3d3d3d;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .settings-title {
+        font-size: 20px;
+        font-weight: 500;
+      }
+      .settings-close {
+        background: transparent;
+        border: none;
+        color: #999;
+        font-size: 24px;
+        cursor: pointer;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+      }
+      .settings-close:hover {
+        background: #3d3d3d;
+        color: #fff;
+      }
+      .settings-body {
+        padding: 20px;
+      }
+      .settings-section {
+        margin-bottom: 30px;
+      }
+      .settings-section-title {
+        font-size: 16px;
+        font-weight: 500;
+        margin-bottom: 15px;
+        color: #fff;
+      }
+      .settings-option {
+        margin-bottom: 15px;
+      }
+      .settings-label {
+        display: block;
+        margin-bottom: 8px;
+        color: #ccc;
+        font-size: 14px;
+      }
+      .settings-select, .settings-input {
+        width: 100%;
+        background: #1e1e1e;
+        border: 1px solid #3d3d3d;
+        color: #fff;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+      .settings-select:focus, .settings-input:focus {
+        outline: none;
+        border-color: #007acc;
+      }
+      .settings-buttons {
+        padding: 20px;
+        border-top: 1px solid #3d3d3d;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+      .settings-button {
+        padding: 8px 16px;
+        border-radius: 4px;
+        border: none;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .settings-button.primary {
+        background: #007acc;
+        color: #fff;
+      }
+      .settings-button.primary:hover {
+        background: #005a9e;
+      }
+      .settings-button.secondary {
+        background: #3d3d3d;
+        color: #fff;
+      }
+      .settings-button.secondary:hover {
+        background: #4d4d4d;
+      }
+      .theme-preview {
+        background: #1e1e1e;
+        border: 1px solid #3d3d3d;
+        border-radius: 4px;
+        padding: 10px;
+        margin-top: 10px;
+        font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+        font-size: 12px;
+        line-height: 1.5;
+      }
     </style>
   </head>
   <body>
@@ -119,8 +270,49 @@
       <div class="tab-bar">
         <div class="tabs-container" id="tabs-container"></div>
         <button class="new-tab-btn" onclick="createNewTab()">+</button>
+        <button class="settings-btn" onclick="openSettings()">⚙</button>
       </div>
       <div class="terminals-container" id="terminals-container"></div>
+    </div>
+    
+    <!-- Settings Modal -->
+    <div class="settings-modal" id="settings-modal">
+      <div class="settings-content">
+        <div class="settings-header">
+          <div class="settings-title">Settings</div>
+          <button class="settings-close" onclick="closeSettings()">×</button>
+        </div>
+        <div class="settings-body">
+          <div class="settings-section">
+            <div class="settings-section-title">Theme</div>
+            <div class="settings-option">
+              <label class="settings-label">Terminal Theme</label>
+              <select class="settings-select" id="theme-select" onchange="updateThemePreview()">
+                <option value="default">Default</option>
+                <option value="atomOneDark">Atom One Dark</option>
+                <option value="dracula">Dracula</option>
+                <option value="monokai">Monokai</option>
+                <option value="nord">Nord</option>
+              </select>
+              <div class="theme-preview" id="theme-preview">
+                <span style="color: #98c379;">user@host</span>:<span style="color: #61afef;">~/spawndeck</span>$ <span style="color: #e06c75;">echo</span> <span style="color: #98c379;">"Hello World"</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="settings-section">
+            <div class="settings-section-title">Keyboard Shortcuts</div>
+            <div class="settings-option">
+              <label class="settings-label">New Tab</label>
+              <input class="settings-input" id="shortcut-newtab" type="text" value="⌘T" readonly>
+            </div>
+          </div>
+        </div>
+        <div class="settings-buttons">
+          <button class="settings-button secondary" onclick="closeSettings()">Cancel</button>
+          <button class="settings-button primary" onclick="saveSettings()">Save</button>
+        </div>
+      </div>
     </div>
     
     <script src="https://unpkg.com/xterm@5.3.0/lib/xterm.js"></script>
@@ -133,6 +325,116 @@
       let tabs = [];
       let activeTabId = null;
       let draggedTab = null;
+      let currentSettings = {};
+      
+      // Terminal themes
+      const themes = {
+        default: {
+          background: '#1e1e1e',
+          foreground: '#d4d4d4',
+          cursor: '#d4d4d4',
+          black: '#000000',
+          red: '#cd3131',
+          green: '#0dbc79',
+          yellow: '#e5e510',
+          blue: '#2472c8',
+          magenta: '#bc3fbc',
+          cyan: '#11a8cd',
+          white: '#e5e5e5',
+          brightBlack: '#666666',
+          brightRed: '#f14c4c',
+          brightGreen: '#23d18b',
+          brightYellow: '#f5f543',
+          brightBlue: '#3b8eea',
+          brightMagenta: '#d670d6',
+          brightCyan: '#29b8db',
+          brightWhite: '#e5e5e5'
+        },
+        atomOneDark: {
+          background: '#282c34',
+          foreground: '#abb2bf',
+          cursor: '#528bff',
+          black: '#282c34',
+          red: '#e06c75',
+          green: '#98c379',
+          yellow: '#e5c07b',
+          blue: '#61afef',
+          magenta: '#c678dd',
+          cyan: '#56b6c2',
+          white: '#abb2bf',
+          brightBlack: '#5c6370',
+          brightRed: '#e06c75',
+          brightGreen: '#98c379',
+          brightYellow: '#e5c07b',
+          brightBlue: '#61afef',
+          brightMagenta: '#c678dd',
+          brightCyan: '#56b6c2',
+          brightWhite: '#ffffff'
+        },
+        dracula: {
+          background: '#282a36',
+          foreground: '#f8f8f2',
+          cursor: '#f8f8f2',
+          black: '#21222c',
+          red: '#ff5555',
+          green: '#50fa7b',
+          yellow: '#f1fa8c',
+          blue: '#bd93f9',
+          magenta: '#ff79c6',
+          cyan: '#8be9fd',
+          white: '#f8f8f2',
+          brightBlack: '#6272a4',
+          brightRed: '#ff6e6e',
+          brightGreen: '#69ff94',
+          brightYellow: '#ffffa5',
+          brightBlue: '#d6acff',
+          brightMagenta: '#ff92df',
+          brightCyan: '#a4ffff',
+          brightWhite: '#ffffff'
+        },
+        monokai: {
+          background: '#272822',
+          foreground: '#f8f8f2',
+          cursor: '#f8f8f0',
+          black: '#272822',
+          red: '#f92672',
+          green: '#a6e22e',
+          yellow: '#f4bf75',
+          blue: '#66d9ef',
+          magenta: '#ae81ff',
+          cyan: '#a1efe4',
+          white: '#f8f8f2',
+          brightBlack: '#75715e',
+          brightRed: '#f92672',
+          brightGreen: '#a6e22e',
+          brightYellow: '#f4bf75',
+          brightBlue: '#66d9ef',
+          brightMagenta: '#ae81ff',
+          brightCyan: '#a1efe4',
+          brightWhite: '#f9f8f5'
+        },
+        nord: {
+          background: '#2e3440',
+          foreground: '#d8dee9',
+          cursor: '#d8dee9',
+          black: '#3b4252',
+          red: '#bf616a',
+          green: '#a3be8c',
+          yellow: '#ebcb8b',
+          blue: '#81a1c1',
+          magenta: '#b48ead',
+          cyan: '#88c0d0',
+          white: '#e5e9f0',
+          brightBlack: '#4c566a',
+          brightRed: '#bf616a',
+          brightGreen: '#a3be8c',
+          brightYellow: '#ebcb8b',
+          brightBlue: '#81a1c1',
+          brightMagenta: '#b48ead',
+          brightCyan: '#8fbcbb',
+          brightWhite: '#eceff4'
+        }
+      };
       
       function generateId() {
         return 'tab-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
@@ -164,15 +466,13 @@
         
         document.getElementById('terminals-container').appendChild(termWrapper);
         
-        // Initialize xterm
+        // Initialize xterm with current theme
+        const theme = themes[currentSettings.theme || 'default'];
         const term = new Terminal({
           cursorBlink: true,
           fontSize: 14,
           fontFamily: 'Menlo, Monaco, "Courier New", monospace',
-          theme: {
-            background: '#1e1e1e',
-            foreground: '#d4d4d4'
-          }
+          theme: theme
         });
         
         const fitAddon = new FitAddon.FitAddon();
@@ -352,13 +652,77 @@
         }
       }
       
+      // Settings functions
+      async function openSettings() {
+        currentSettings = await window.electronAPI.settings.get();
+        document.getElementById('theme-select').value = currentSettings.theme || 'default';
+        updateThemePreview();
+        document.getElementById('settings-modal').classList.add('active');
+      }
+      
+      function closeSettings() {
+        document.getElementById('settings-modal').classList.remove('active');
+      }
+      
+      function updateThemePreview() {
+        const themeSelect = document.getElementById('theme-select');
+        const preview = document.getElementById('theme-preview');
+        const theme = themes[themeSelect.value];
+        
+        if (theme) {
+          preview.style.backgroundColor = theme.background;
+          preview.style.color = theme.foreground;
+          
+          // Update preview content with theme colors
+          preview.innerHTML = `
+            <span style="color: ${theme.green};">user@host</span>:<span style="color: ${theme.blue};">~/spawndeck</span>$ <span style="color: ${theme.red};">echo</span> <span style="color: ${theme.green};">"Hello World"</span>
+          `;
+        }
+      }
+      
+      async function saveSettings() {
+        const newSettings = {
+          theme: document.getElementById('theme-select').value,
+          shortcuts: {
+            newTab: 'CommandOrControl+T' // For now, keep it fixed
+          }
+        };
+        
+        await window.electronAPI.settings.save(newSettings);
+        currentSettings = newSettings;
+        
+        // Apply theme to all existing terminals
+        const theme = themes[newSettings.theme];
+        tabs.forEach(tab => {
+          if (tab.terminal) {
+            tab.terminal.options.theme = theme;
+          }
+        });
+        
+        closeSettings();
+      }
+      
       // Initialize with one tab when page loads
-      window.addEventListener('DOMContentLoaded', () => {
+      window.addEventListener('DOMContentLoaded', async () => {
+        // Add platform-specific class
+        const platform = navigator.platform.toLowerCase();
+        if (platform.includes('mac')) {
+          document.body.classList.add('darwin');
+        }
+        
         if (!window.electronAPI) {
           console.error('electronAPI not available');
           document.body.innerHTML = '<p style="padding: 20px;">Error: electronAPI not available. Check preload script.</p>';
           return;
         }
+        
+        // Load settings
+        currentSettings = await window.electronAPI.settings.get();
+        
+        // Listen for keyboard shortcuts
+        window.electronAPI.onShortcut('newTab', () => {
+          createNewTab();
+        });
         
         createNewTab();
       });
@@ -370,6 +734,13 @@
             tab.fitAddon.fit();
           }
         });
+      });
+      
+      // Close settings modal on Escape
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.getElementById('settings-modal').classList.contains('active')) {
+          closeSettings();
+        }
       });
     </script>
   </body>

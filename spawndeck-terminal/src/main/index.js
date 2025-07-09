@@ -1,10 +1,39 @@
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, globalShortcut } = require('electron');
 const { join } = require('path');
 const url = require('url');
 const pty = require('node-pty');
+const fs = require('fs');
+const path = require('path');
 
 const terminals = new Map();
 let mainWindow;
+
+// Settings management
+const settingsPath = path.join(app.getPath('userData'), 'settings.json');
+let settings = {
+    theme: 'default',
+    shortcuts: {
+        newTab: 'CommandOrControl+T'
+    }
+};
+
+function loadSettings() {
+    try {
+        if (fs.existsSync(settingsPath)) {
+            settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+        }
+    } catch (error) {
+        console.error('Error loading settings:', error);
+    }
+}
+
+function saveSettings() {
+    try {
+        fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+    } catch (error) {
+        console.error('Error saving settings:', error);
+    }
+}
 
 function createWindow() {
     mainWindow = new BrowserWindow({
@@ -12,6 +41,7 @@ function createWindow() {
         height: 670,
         show: false,
         titleBarStyle: 'hiddenInset',
+        trafficLightPosition: { x: 20, y: 20 },
         webPreferences: {
             preload: join(__dirname, '../preload/index.js'),
             sandbox: false,
@@ -44,7 +74,15 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+    loadSettings();
     createWindow();
+
+    // Register global shortcuts
+    globalShortcut.register(settings.shortcuts.newTab, () => {
+        if (mainWindow) {
+            mainWindow.webContents.send('shortcut:newTab');
+        }
+    });
 
     app.on('activate', function () {
         if (BrowserWindow.getAllWindows().length === 0)
@@ -56,6 +94,11 @@ app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit();
     }
+});
+
+app.on('will-quit', () => {
+    // Unregister all shortcuts
+    globalShortcut.unregisterAll();
 });
 
 // Terminal IPC handlers
@@ -122,4 +165,24 @@ ipcMain.handle('terminal:kill', (event, { id }) => {
         return { success: true };
     }
     return { success: false, error: 'Terminal not found' };
+});
+
+// Settings IPC handlers
+ipcMain.handle('settings:get', () => {
+    return settings;
+});
+
+ipcMain.handle('settings:save', (event, newSettings) => {
+    settings = { ...settings, ...newSettings };
+    saveSettings();
+    
+    // Re-register shortcuts if they changed
+    globalShortcut.unregisterAll();
+    globalShortcut.register(settings.shortcuts.newTab, () => {
+        if (mainWindow) {
+            mainWindow.webContents.send('shortcut:newTab');
+        }
+    });
+    
+    return { success: true };
 });
