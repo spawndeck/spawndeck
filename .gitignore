@@ -49,6 +49,8 @@ spawndeck-www/infrastructure/bin/*.d.ts
 # Keep these JS files
 !spawndeck-cli/*.js
 !spawndeck-cli/**/*.js
+!spawndeck-terminal/*.js
+!spawndeck-terminal/**/*.js
 !spawndeck-www/.next/**/*.js
 !spawndeck-www/next.config.js
 !spawndeck-www/tailwind.config.js
