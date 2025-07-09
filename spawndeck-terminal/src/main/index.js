@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell, globalShortcut, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, Menu } = require('electron');
 const { join } = require('path');
 const url = require('url');
 const pty = require('node-pty');
@@ -200,13 +200,6 @@ app.whenReady().then(() => {
     createWindow();
     createMenu();
 
-    // Register global shortcuts
-    globalShortcut.register(settings.shortcuts.newTab, () => {
-        if (mainWindow) {
-            mainWindow.webContents.send('shortcut:newTab');
-        }
-    });
-
     app.on('activate', function () {
         if (BrowserWindow.getAllWindows().length === 0)
             createWindow();
@@ -217,11 +210,6 @@ app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit();
     }
-});
-
-app.on('will-quit', () => {
-    // Unregister all shortcuts
-    globalShortcut.unregisterAll();
 });
 
 // Terminal IPC handlers
@@ -298,14 +286,6 @@ ipcMain.handle('settings:get', () => {
 ipcMain.handle('settings:save', (event, newSettings) => {
     settings = { ...settings, ...newSettings };
     saveSettings();
-    
-    // Re-register shortcuts if they changed
-    globalShortcut.unregisterAll();
-    globalShortcut.register(settings.shortcuts.newTab, () => {
-        if (mainWindow) {
-            mainWindow.webContents.send('shortcut:newTab');
-        }
-    });
     
     // Recreate menu to update shortcuts
     createMenu();
