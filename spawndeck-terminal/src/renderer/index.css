@@ -1,0 +1,16 @@
+:root {
+  --app-bg: #1e1e1e;
+  --tab-bar-bg: #252526;
+  --tab-bg: #2d2d30;
+  --tab-hover-bg: #3e3e42;
+  --active-tab-bg: #1e1e1e;
+  --border-color: #464647;
+  --tab-text: #cccccc;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
