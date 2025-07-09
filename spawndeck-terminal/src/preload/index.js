@@ -50,7 +50,8 @@ const electronAPI = {
     const channel = `menu:${action}`;
     ipcRenderer.on(channel, callback);
     return () => ipcRenderer.removeAllListeners(channel);
-  }
+  },
+  titleBarDoubleClick: () => ipcRenderer.send('titlebar-double-click')
 };
 
 // Expose the API to the renderer process

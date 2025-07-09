@@ -38,6 +38,7 @@
         overflow-x: auto;
         align-items: center;
         gap: 4px;
+        -webkit-app-region: drag; /* Ensure draggable area for double-click */
       }
       .tab {
         position: relative;
@@ -725,6 +726,15 @@
           document.body.innerHTML = '<p style="padding: 20px;">Error: electronAPI not available. Check preload script.</p>';
           return;
         }
+        
+        // Handle double-click on title bar
+        const tabBar = document.querySelector('.tab-bar');
+        tabBar.addEventListener('dblclick', (e) => {
+          // Only handle double-click on the draggable area (not on tabs or buttons)
+          if (e.target.classList.contains('tab-bar') || e.target.classList.contains('tabs-container')) {
+            window.electronAPI.titleBarDoubleClick();
+          }
+        });
         
         // Load settings
         currentSettings = await window.electronAPI.settings.get();

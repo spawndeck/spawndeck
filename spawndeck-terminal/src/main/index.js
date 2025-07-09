@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, Menu, systemPreferences } = require('electron');
 const { join } = require('path');
 const url = require('url');
 const pty = require('node-pty');
@@ -276,6 +276,23 @@ ipcMain.handle('terminal:kill', (event, { id }) => {
         return { success: true };
     }
     return { success: false, error: 'Terminal not found' };
+});
+
+// Handle title bar double-click
+ipcMain.on('titlebar-double-click', () => {
+    if (process.platform === 'darwin') {
+        const action = systemPreferences.getUserDefault('AppleActionOnDoubleClick', 'string');
+        if (action === 'Minimize') {
+            mainWindow.minimize();
+        } else {
+            // Default to maximize/restore (includes 'Maximize' and undefined)
+            if (mainWindow.isMaximized()) {
+                mainWindow.unmaximize();
+            } else {
+                mainWindow.maximize();
+            }
+        }
+    }
 });
 
 // Settings IPC handlers
