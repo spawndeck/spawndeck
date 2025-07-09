@@ -45,6 +45,11 @@ const electronAPI = {
     const channel = `shortcut:${shortcut}`;
     ipcRenderer.on(channel, callback);
     return () => ipcRenderer.removeAllListeners(channel);
+  },
+  onMenuAction: (action, callback) => {
+    const channel = `menu:${action}`;
+    ipcRenderer.on(channel, callback);
+    return () => ipcRenderer.removeAllListeners(channel);
   }
 };
 

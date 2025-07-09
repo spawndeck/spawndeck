@@ -100,21 +100,6 @@
         background: #3d3d3d;
         color: #fff;
       }
-      .settings-btn {
-        padding: 4px 12px;
-        background: transparent;
-        border: 1px solid #555;
-        color: #999;
-        cursor: pointer;
-        border-radius: 4px;
-        margin-left: 8px;
-        font-size: 14px;
-        -webkit-app-region: no-drag;
-      }
-      .settings-btn:hover {
-        background: #3d3d3d;
-        color: #fff;
-      }
       .terminals-container {
         flex: 1;
         position: relative;
@@ -270,7 +255,6 @@
       <div class="tab-bar">
         <div class="tabs-container" id="tabs-container"></div>
         <button class="new-tab-btn" onclick="createNewTab()">+</button>
-        <button class="settings-btn" onclick="openSettings()">⚙</button>
       </div>
       <div class="terminals-container" id="terminals-container"></div>
     </div>
@@ -722,6 +706,18 @@
         // Listen for keyboard shortcuts
         window.electronAPI.onShortcut('newTab', () => {
           createNewTab();
+        });
+        
+        // Listen for menu actions
+        window.electronAPI.onMenuAction('openSettings', () => {
+          openSettings();
+        });
+        
+        window.electronAPI.onMenuAction('clearTerminal', () => {
+          const activeTab = tabs.find(t => t.id === activeTabId);
+          if (activeTab && activeTab.terminal) {
+            activeTab.terminal.clear();
+          }
         });
         
         createNewTab();

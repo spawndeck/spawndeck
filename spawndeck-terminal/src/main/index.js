@@ -1,9 +1,12 @@
-const { app, BrowserWindow, ipcMain, shell, globalShortcut } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, globalShortcut, Menu } = require('electron');
 const { join } = require('path');
 const url = require('url');
 const pty = require('node-pty');
 const fs = require('fs');
 const path = require('path');
+
+// Set app name
+app.name = 'Spawndeck';
 
 const terminals = new Map();
 let mainWindow;
@@ -73,9 +76,129 @@ function createWindow() {
     }
 }
 
+function createMenu() {
+    const template = [
+        {
+            label: app.name,
+            submenu: [
+                {
+                    label: 'About ' + app.name,
+                    role: 'about'
+                },
+                { type: 'separator' },
+                {
+                    label: 'Settings...',
+                    accelerator: 'Command+,',
+                    click: () => {
+                        if (mainWindow) {
+                            mainWindow.webContents.send('menu:openSettings');
+                        }
+                    }
+                },
+                { type: 'separator' },
+                {
+                    label: 'Hide ' + app.name,
+                    accelerator: 'Command+H',
+                    role: 'hide'
+                },
+                {
+                    label: 'Hide Others',
+                    accelerator: 'Command+Option+H',
+                    role: 'hideOthers'
+                },
+                {
+                    label: 'Show All',
+                    role: 'unhide'
+                },
+                { type: 'separator' },
+                {
+                    label: 'Quit ' + app.name,
+                    accelerator: 'Command+Q',
+                    role: 'quit'
+                }
+            ]
+        },
+        {
+            label: 'Edit',
+            submenu: [
+                { label: 'Undo', accelerator: 'CmdOrCtrl+Z', role: 'undo' },
+                { label: 'Redo', accelerator: 'Shift+CmdOrCtrl+Z', role: 'redo' },
+                { type: 'separator' },
+                { label: 'Cut', accelerator: 'CmdOrCtrl+X', role: 'cut' },
+                { label: 'Copy', accelerator: 'CmdOrCtrl+C', role: 'copy' },
+                { label: 'Paste', accelerator: 'CmdOrCtrl+V', role: 'paste' },
+                { label: 'Select All', accelerator: 'CmdOrCtrl+A', role: 'selectAll' }
+            ]
+        },
+        {
+            label: 'View',
+            submenu: [
+                { label: 'Reload', accelerator: 'CmdOrCtrl+R', role: 'reload' },
+                { label: 'Force Reload', accelerator: 'CmdOrCtrl+Shift+R', role: 'forceReload' },
+                { label: 'Toggle Developer Tools', accelerator: 'F12', role: 'toggleDevTools' },
+                { type: 'separator' },
+                { label: 'Actual Size', accelerator: 'CmdOrCtrl+0', role: 'resetZoom' },
+                { label: 'Zoom In', accelerator: 'CmdOrCtrl+Plus', role: 'zoomIn' },
+                { label: 'Zoom Out', accelerator: 'CmdOrCtrl+-', role: 'zoomOut' },
+                { type: 'separator' },
+                { label: 'Toggle Fullscreen', accelerator: 'Control+Command+F', role: 'togglefullscreen' }
+            ]
+        },
+        {
+            label: 'Terminal',
+            submenu: [
+                {
+                    label: 'New Tab',
+                    accelerator: settings.shortcuts.newTab,
+                    click: () => {
+                        if (mainWindow) {
+                            mainWindow.webContents.send('shortcut:newTab');
+                        }
+                    }
+                },
+                { type: 'separator' },
+                {
+                    label: 'Clear',
+                    accelerator: 'Command+K',
+                    click: () => {
+                        if (mainWindow) {
+                            mainWindow.webContents.send('menu:clearTerminal');
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            label: 'Window',
+            submenu: [
+                { label: 'Minimize', accelerator: 'CmdOrCtrl+M', role: 'minimize' },
+                { label: 'Close', accelerator: 'CmdOrCtrl+W', role: 'close' },
+                { type: 'separator' },
+                { label: 'Bring All to Front', role: 'front' }
+            ]
+        },
+        {
+            label: 'Help',
+            submenu: [
+                {
+                    label: 'Learn More',
+                    click: async () => {
+                        await shell.openExternal('https://github.com/spawndeck/spawndeck');
+                    }
+                }
+            ]
+        }
+    ];
+
+    // Set menu for all platforms (will be in the menu bar on macOS)
+    const menu = Menu.buildFromTemplate(template);
+    Menu.setApplicationMenu(menu);
+}
+
 app.whenReady().then(() => {
     loadSettings();
     createWindow();
+    createMenu();
 
     // Register global shortcuts
     globalShortcut.register(settings.shortcuts.newTab, () => {
@@ -183,6 +306,9 @@ ipcMain.handle('settings:save', (event, newSettings) => {
             mainWindow.webContents.send('shortcut:newTab');
         }
     });
+    
+    // Recreate menu to update shortcuts
+    createMenu();
     
     return { success: true };
 });
